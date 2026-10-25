@@ -6,4 +6,4 @@
 - style.css : 見た目の設定
 
 ### 公開URL
-(第７回で記入します)
+https://ouj-7o3.github.io/my-website/
