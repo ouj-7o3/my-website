@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ULTRA DEMOSCENE - MEGADEMO '97/'26</title>
+    <!-- Google Fonts for retro demoscene typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --neon-pink: #ff007f;
+            --neon-cyan: #00f3ff;
+            --neon-green: #00ff66;
+            --neon-gold: #ffcc00;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #050508;
+            font-family: 'Share Tech Mono', monospace;
+            color: #fff;
+            user-select: none;
+        }
+
+        /* Canvas Container */
+        #demo-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+        }
+
+        canvas#demoCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            z-index: 1;
+        }
+
+        /* CRT Scanlines and RGB Glitch Overlay */
+        .crt-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            ), linear-gradient(
+                90deg,
+                rgba(255, 0, 0, 0.03),
+                rgba(0, 255, 0, 0.01),
+                rgba(0, 0, 255, 0.03)
+            );
+            background-size: 100% 4px, 6px 100%;
+            opacity: 0.85;
+            transition: opacity 0.3s ease;
+        }
+
+        .crt-vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 11;
+            pointer-events: none;
+            box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.9);
+        }
+
+        /* Demoscene Retro UI / HUD Overlay */
+        .hud-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 15px;
+            box-sizing: border-box;
+            pointer-events: none;
+        }
+
+        .hud-overlay * {
+            pointer-events: auto;
+        }
+
+        .retro-panel {
+            background: rgba(10, 10, 20, 0.75);
+            border: 2px solid var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.3), inset 0 0 10px rgba(0, 243, 255, 0.15);
+            border-radius: 4px;
+            backdrop-filter: blur(4px);
+            padding: 10px 15px;
+        }
+
+        .retro-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.75rem;
+            text-shadow: 2px 2px #ff007f;
+            color: var(--neon-cyan);
+            letter-spacing: 1px;
+        }
+
+        .retro-btn {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.65rem;
+            background: linear-gradient(180deg, #2a2a40 0%, #121220 100%);
+            color: #00ff66;
+            border: 2px solid #00ff66;
+            padding: 8px 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 3px 3px 0px #000;
+            transition: all 0.1s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .retro-btn:hover {
+            background: #00ff66;
+            color: #000;
+            box-shadow: 1px 1px 0px #000;
+            transform: translate(2px, 2px);
+        }
+
+        .retro-btn:active {
+            transform: translate(3px, 3px);
+            box-shadow: none;
+        }
+
+        .retro-btn.active {
+            background: var(--neon-pink);
+            color: #fff;
+            border-color: #ff80df;
+            box-shadow: 0 0 10px var(--neon-pink);
+        }
+
+        /* Custom Scrollbar for Scene Select */
+        .hud-select {
+            background: #0a0a18;
+            color: var(--neon-cyan);
+            border: 1px solid var(--neon-cyan);
+            font-family: 'Share Tech Mono', monospace;
+            padding: 4px 8px;
+            outline: none;
+        }
+
+        /* OSD Start Screen Overlay */
+        #start-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 50;
+            background: rgba(5, 5, 12, 0.92);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(8px);
+        }
+
+        .logo-text {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 2.2rem;
+            line-height: 1.4;
+            text-align: center;
+            background: linear-gradient(180deg, #fff 0%, #00f3ff 50%, #ff007f 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(4px 4px 0px #ff007f);
+            animation: pulseLogo 2s infinite ease-in-out;
+        }
+
+        @keyframes pulseLogo {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        /* Oscilloscope / Spectrum Visualizer Overlay Window */
+        .visualizer-box {
+            width: 160px;
+            height: 48px;
+            background: #000;
+            border: 1px solid var(--neon-green);
+            position: relative;
+            overflow: hidden;
+        }
+
+        canvas#visCanvas {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div id="demo-container">
+    <!-- Main Demoscene Canvas -->
+    <canvas id="demoCanvas"></canvas>
+
+    <!-- CRT Scanlines & Vignette -->
+    <div id="crtOverlay" class="crt-overlay"></div>
+    <div class="crt-vignette"></div>
+
+    <!-- HUD / Controls Overlay -->
+    <div class="hud-overlay">
+        <!-- Top HUD Bar -->
+        <div class="flex flex-wrap justify-between items-center w-full gap-2">
+            <div class="retro-panel flex items-center gap-4">
+                <span class="retro-title">GEMINI MEGADEMO '97/'26</span>
+                <span id="fpsCounter" class="text-xs text-green-400 font-mono">FPS: 60</span>
+                <span id="timeCounter" class="text-xs text-yellow-400 font-mono">TIME: 00:00</span>
+            </div>
+
+            <!-- Audio & Track Info -->
+            <div class="retro-panel flex items-center gap-3">
+                <div class="flex flex-col text-right">
+                    <span class="text-xs text-cyan-400 font-bold" id="trackName">TRACK: CHIPTUNE ODYSSEY</span>
+                    <span class="text-[10px] text-pink-400" id="audioStatus">AUDIO: MUTED</span>
+                </div>
+                <div class="visualizer-box rounded">
+                    <canvas id="visCanvas" width="160" height="48"></canvas>
+                </div>
+                <button id="audioBtn" class="retro-btn">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                    START AUDIO
+                </button>
+            </div>
+        </div>
+
+        <!-- Bottom HUD Controls & Info Bar -->
+        <div class="flex flex-wrap justify-between items-end w-full gap-2">
+            <div class="retro-panel flex items-center gap-2">
+                <label class="text-xs text-pink-400 font-bold">SCENE:</label>
+                <select id="sceneSelect" class="hud-select text-xs rounded">
+                    <option value="0">01: ALL EFFECTS (MEGA MODE)</option>
+                    <option value="1">02: 3D CYBER TUNNEL</option>
+                    <option value="2">03: ROTATING POLYHEDRON</option>
+                    <option value="3">04: RETRO PLASMA GENERATOR</option>
+                    <option value="4">05: COPPER RASTER BARS</option>
+                    <option value="5">06: HYPER STARFIELD</option>
+                </select>
+                <button id="nextSceneBtn" class="retro-btn text-[10px] py-1 px-2">NEXT &gt;</button>
+            </div>
+
+            <div class="retro-panel flex items-center gap-3">
+                <button id="crtBtn" class="retro-btn active text-[10px]">CRT: ON</button>
+                <button id="bloomBtn" class="retro-btn active text-[10px]">BLOOM: ON</button>
+                <button id="fullscreenBtn" class="retro-btn text-[10px]">FULLSCREEN</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Overlay Screen -->
+    <div id="start-overlay">
+        <div class="text-center p-6 max-w-xl">
+            <div class="logo-text mb-4">GEMINI<br>MEGADEMO</div>
+            <div class="text-cyan-400 font-mono text-sm mb-6 tracking-widest">[ 100% VANILLA JS / CANVAS2D / WEB AUDIO ]</div>
+            
+            <p class="text-gray-300 text-xs leading-relaxed mb-8 font-mono">
+                A Tribute to 90s Amiga & PC Demoscene Aesthetics.<br>
+                Features 3D Realtime Vector Wireframes, Dynamic Raster Bars, High-Frequency Plasma, Audio Visualizer, & 8-Bit Chiptune Synthesizer.
+            </p>
+
+            <button id="startDemoBtn" class="retro-btn text-sm py-4 px-8 border-2 shadow-lg animate-bounce">
+                ▶ ENTER THE DEMO
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+/**
+ * ULTRA MEGADEMO ENGINE (1997 / 2026)
+ * Pure Vanilla JavaScript & Canvas 2D Implementation
+ */
+
+// --- Global State & Configuration ---
+const state = {
+    running: false,
+    startTime: 0,
+    currentTime: 0,
+    fps: 60,
+    frameCount: 0,
+    lastFpsUpdate: 0,
+    activeScene: 0, // 0 = Auto/All, 1 = Tunnel, 2 = Polyhedron, 3 = Plasma, 4 = Raster, 5 = Starfield
+    crtEnabled: true,
+    bloomEnabled: true,
+    audioPlaying: false
+};
+
+// --- Canvas Setup ---
+const canvas = document.getElementById('demoCanvas');
+const ctx = canvas.getContext('2d', { alpha: false });
+const visCanvas = document.getElementById('visCanvas');
+const visCtx = visCanvas.getContext('2d');
+
+let width = 0;
+let height = 0;
+
+function resizeCanvas() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// ==========================================
+// 1. WEB AUDIO API CHIPTUNE SYNTHESIZER
+// ==========================================
+class ChiptuneSynth {
+    constructor() {
+        this.ctx = null;
+        this.analyser = null;
+        this.isPlaying = false;
+        this.tempo = 128; // BPM
+        this.step = 0;
+        this.timer = null;
+
+        // Chiptune Track Notes (Frequencies in Hz)
+        this.notes = {
+            C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00, B3: 246.94,
+            C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88,
+            C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99, A5: 880.00, OFF: 0
+        };
+
+        // 16-step tracker pattern sequences
+        this.leadPattern = [
+            'C5', 'E5', 'G5', 'C5', 'E5', 'G5', 'B4', 'D5',
+            'A4', 'C5', 'E5', 'A4', 'F4', 'A4', 'C5', 'G4'
+        ];
+        this.bassPattern = [
+            'C3', 'OFF', 'C3', 'OFF', 'A3', 'OFF', 'A3', 'OFF',
+            'F3', 'OFF', 'F3', 'OFF', 'G3', 'OFF', 'G3', 'OFF'
+        ];
+        this.arpeggioPattern = [
+            'C4', 'G4', 'E4', 'G4', 'A3', 'E4', 'C4', 'E4',
+            'F3', 'C4', 'A3', 'C4', 'G3', 'D4', 'B3', 'D4'
+        ];
+    }
+
+    init() {
+        if (this.ctx) return;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioContext();
+        
+        this.analyser = this.ctx.createAnalyser();
+        this.analyser.fftSize = 64;
+        this.analyser.connect(this.ctx.destination);
+    }
+
+    start() {
+        this.init();
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+        this.isPlaying = true;
+        this.step = 0;
+        const stepTime = (60 / this.tempo) / 4 * 1000;
+        this.timer = setInterval(() => this.tick(), stepTime);
+    }
+
+    stop() {
+        this.isPlaying = false;
+        if (this.timer) clearInterval(this.timer);
+    }
+
+    playTone(freq, type, duration, vol = 0.1) {
+        if (!freq || freq === 0) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = type; // 'square', 'sawtooth', 'triangle'
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+
+        osc.connect(gain);
+        gain.connect(this.analyser);
+
+        osc.start();
+        osc.stop(this.ctx.currentTime + duration);
+    }
+
+    playNoise(duration, vol = 0.05) {
+        const bufferSize = this.ctx.sampleRate * duration;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+
+        noise.connect(gain);
+        gain.connect(this.analyser);
+
+        noise.start();
+    }
+
+    tick() {
+        if (!this.isPlaying) return;
+
+        // Lead synth (Square wave)
+        const leadNote = this.leadPattern[this.step % this.leadPattern.length];
+        this.playTone(this.notes[leadNote], 'square', 0.15, 0.08);
+
+        // Arpeggio synth (Sawtooth wave)
+        const arpNote = this.arpeggioPattern[this.step % this.arpeggioPattern.length];
+        this.playTone(this.notes[arpNote], 'sawtooth', 0.1, 0.04);
+
+        // Bassline (Triangle wave)
+        const bassNote = this.bassPattern[this.step % this.bassPattern.length];
+        this.playTone(this.notes[bassNote], 'triangle', 0.22, 0.15);
+
+        // Retro Percussion Synth (Noise/Kick)
+        if (this.step % 4 === 0) {
+            // Kick drum simulation (frequency sweep)
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.frequency.setValueAtTime(120, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+            gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+            osc.connect(gain);
+            gain.connect(this.analyser);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.12);
+        } else if (this.step % 4 === 2) {
+            // Snare / Noise hit
+            this.playNoise(0.08, 0.06);
+        }
+
+        this.step++;
+    }
+
+    getVisualizerData(dataArray) {
+        if (this.analyser) {
+            this.analyser.getByteFrequencyData(dataArray);
+        }
+    }
+}
+
+const synth = new ChiptuneSynth();
+
+// ==========================================
+// 2. DEMOSCENE VISUAL EFFECTS MODULES
+// ==========================================
+
+// --- Effect 1: 3D Wireframe Tunnel ---
+class TunnelEffect {
+    constructor() {
+        this.numRings = 24;
+        this.ringPoints = 12;
+    }
+
+    draw(ctx, t) {
+        const cx = width / 2;
+        const cy = height / 2;
+        const speed = t * 2;
+
+        for (let i = 0; i < this.numRings; i++) {
+            const z = ((i - speed % 1) + this.numRings) % this.numRings;
+            const perspective = 300 / (z + 0.5);
+            const radius = perspective * 12;
+
+            ctx.beginPath();
+            const hue = (t * 50 + i * 15) % 360;
+            ctx.strokeStyle = `hsla(${hue}, 100%, 60%, ${1 - z / this.numRings})`;
+            ctx.lineWidth = Math.max(1, (1 - z / this.numRings) * 3);
+
+            for (let j = 0; j <= this.ringPoints; j++) {
+                const angle = (j / this.ringPoints) * Math.PI * 2 + (t * 0.5 + z * 0.05);
+                const x = cx + Math.cos(angle) * radius;
+                const y = cy + Math.sin(angle) * radius;
+
+                if (j === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+        }
+    }
+}
+
+// --- Effect 2: Rotating 3D Polyhedron (Icosahedron) ---
+class PolyhedronEffect {
+    constructor() {
+        // Gold ratio for icosahedron vertices
+        const phi = (1 + Math.sqrt(5)) / 2;
+        this.vertices = [
+            [-1, phi, 0], [1, phi, 0], [-1, -phi, 0], [1, -phi, 0],
+            [0, -1, phi], [0, 1, phi], [0, -1, -phi], [0, 1, -phi],
+            [phi, 0, -1], [phi, 0, 1], [-phi, 0, -1], [-phi, 0, 1]
+        ];
+
+        this.faces = [
+            [0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11],
+            [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8],
+            [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9],
+            [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1]
+        ];
+    }
+
+    draw(ctx, t) {
+        const scale = Math.min(width, height) * 0.22;
+        const cx = width / 2;
+        const cy = height / 2;
+
+        const rx = t * 0.8;
+        const ry = t * 1.2;
+        const rz = t * 0.5;
+
+        // Rotation matrix calculations
+        const projected = this.vertices.map(v => {
+            let [x, y, z] = v;
+
+            // Rotate X
+            let y1 = y * Math.cos(rx) - z * Math.sin(rx);
+            let z1 = y * Math.sin(rx) + z * Math.cos(rx);
+            // Rotate Y
+            let x2 = x * Math.cos(ry) + z1 * Math.sin(ry);
+            let z2 = -x * Math.sin(ry) + z1 * Math.cos(ry);
+            // Rotate Z
+            let x3 = x2 * Math.cos(rz) - y1 * Math.sin(rz);
+            let y3 = x2 * Math.sin(rz) + y1 * Math.cos(rz);
+
+            const distance = 3.5;
+            const pz = 1 / (distance - z2);
+            return {
+                x: cx + x3 * scale * pz,
+                y: cy + y3 * scale * pz,
+                z: z2
+            };
+        });
+
+        // Sort faces by depth
+        const sortedFaces = [...this.faces].map(face => {
+            const zAvg = (projected[face[0]].z + projected[face[1]].z + projected[face[2]].z) / 3;
+            return { face, zAvg };
+        }).sort((a, b) => a.zAvg - b.zAvg);
+
+        // Render shaded wireframe faces
+        sortedFaces.forEach(({ face, zAvg }) => {
+            const p1 = projected[face[0]];
+            const p2 = projected[face[1]];
+            const p3 = projected[face[2]];
+
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.lineTo(p3.x, p3.y);
+            ctx.closePath();
+
+            const intensity = Math.floor((zAvg + 1.5) * 80);
+            ctx.fillStyle = `rgba(0, ${Math.min(255, intensity + 50)}, ${Math.min(255, intensity + 150)}, 0.65)`;
+            ctx.fill();
+
+            ctx.strokeStyle = '#00f3ff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        });
+    }
+}
+
+// --- Effect 3: Oldschool Retro Plasma ---
+class PlasmaEffect {
+    constructor() {
+        this.bufferCanvas = document.createElement('canvas');
+        this.bufferCanvas.width = 160;
+        this.bufferCanvas.height = 120;
+        this.bCtx = this.bufferCanvas.getContext('2d');
+        this.imgData = this.bCtx.createImageData(160, 120);
+    }
+
+    draw(ctx, t) {
+        const w = 160;
+        const h = 120;
+        const data = this.imgData.data;
+
+        let index = 0;
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                // Sine wave plasma algorithm
+                const v1 = Math.sin(x * 0.05 + t);
+                const v2 = Math.sin(y * 0.05 + t);
+                const v3 = Math.sin((x + y) * 0.05 + t);
+                const v4 = Math.sin(Math.sqrt(x * x + y * y) * 0.05 + t);
+
+                const v = (v1 + v2 + v3 + v4) * 0.25;
+
+                // Dynamic palette mapping
+                const r = Math.floor(Math.sin(v * Math.PI) * 127 + 128);
+                const g = Math.floor(Math.cos(v * Math.PI) * 127 + 128);
+                const b = Math.floor(Math.sin(v * Math.PI + (Math.PI / 2)) * 127 + 128);
+
+                data[index] = r;
+                data[index + 1] = g;
+                data[index + 2] = b;
+                data[index + 3] = 180; // Semi-transparent overlay
+
+                index += 4;
+            }
+        }
+
+        this.bCtx.putImageData(this.imgData, 0, 0);
+
+        // Scale to fullscreen
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.drawImage(this.bufferCanvas, 0, 0, width, height);
+        ctx.restore();
+    }
+}
+
+// --- Effect 4: Amiga Copper / Raster Bars ---
+class CopperBarsEffect {
+    draw(ctx, t) {
+        const barCount = 7;
+        const barHeight = 24;
+
+        for (let i = 0; i < barCount; i++) {
+            const y = (Math.sin(t * 1.5 + i * 0.4) * 0.4 + 0.5) * height;
+
+            const grad = ctx.createLinearGradient(0, y - barHeight, 0, y + barHeight);
+            const hue = (t * 40 + i * 35) % 360;
+
+            grad.addColorStop(0, 'rgba(0,0,0,0)');
+            grad.addColorStop(0.5, `hsla(${hue}, 100%, 50%, 0.85)`);
+            grad.addColorStop(1, 'rgba(0,0,0,0)');
+
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, y - barHeight, width, barHeight * 2);
+        }
+    }
+}
+
+// --- Effect 5: 3D Starfield ---
+class StarfieldEffect {
+    constructor() {
+        this.stars = [];
+        this.count = 400;
+        for (let i = 0; i < this.count; i++) {
+            this.stars.push({
+                x: (Math.random() - 0.5) * 2000,
+                y: (Math.random() - 0.5) * 2000,
+                z: Math.random() * 1000 + 1
+            });
+        }
+    }
+
+    draw(ctx, t) {
+        const cx = width / 2;
+        const cy = height / 2;
+
+        ctx.fillStyle = '#ffffff';
+
+        for (let i = 0; i < this.count; i++) {
+            let star = this.stars[i];
+            star.z -= 8; // Speed
+
+            if (star.z <= 0) {
+                star.z = 1000;
+                star.x = (Math.random() - 0.5) * 2000;
+                star.y = (Math.random() - 0.5) * 2000;
+            }
+
+            const k = 400 / star.z;
+            const px = star.x * k + cx;
+            const py = star.y * k + cy;
+
+            if (px >= 0 && px < width && py >= 0 && py < height) {
+                const size = Math.max(1, (1 - star.z / 1000) * 3.5);
+                const alpha = 1 - star.z / 1000;
+                ctx.fillStyle = `rgba(0, 243, 255, ${alpha})`;
+                ctx.fillRect(px, py, size, size);
+            }
+        }
+    }
+}
+
+// --- Effect 6: Sine Wave Bouncing Text Scroller ---
+class SineScroller {
+    constructor() {
+        this.text = "   *** GEMINI DEMOSCENE MEGADEMO 1997 / 2026 ***   GREETINGS TO ALL HACKERS, SCENERS, CREATORS & RETRO CODERS AROUND THE WORLD... PURE VANILLA JS & CANVAS2D POWERS THIS DEMO... NO LIBRARIES, NO ENGINE, 100% HARDCORE HAND-WRITTEN CODE... KEEP THE DEMOSCENE ALIVE!   ";
+        this.scrollPos = 0;
+    }
+
+    draw(ctx, t) {
+        ctx.font = "bold 24px 'Press Start 2P', monospace";
+        const charWidth = 26;
+        this.scrollPos += 3.5;
+
+        if (this.scrollPos > this.text.length * charWidth) {
+            this.scrollPos = 0;
+        }
+
+        const startIdx = Math.floor(this.scrollPos / charWidth);
+        const offsetX = -(this.scrollPos % charWidth);
+        const baseY = height - 60;
+
+        for (let i = 0; i < Math.ceil(width / charWidth) + 2; i++) {
+            const charIdx = (startIdx + i) % this.text.length;
+            const char = this.text[charIdx];
+
+            const x = i * charWidth + offsetX;
+            const sineY = baseY + Math.sin(t * 4 + i * 0.2) * 25;
+
+            // Copper text gradient effect
+            const gradient = ctx.createLinearGradient(0, sineY - 20, 0, sineY + 10);
+            gradient.addColorStop(0, '#ffcc00');
+            gradient.addColorStop(0.5, '#ff007f');
+            gradient.addColorStop(1, '#00f3ff');
+
+            ctx.fillStyle = gradient;
+            ctx.shadowColor = '#ff007f';
+            ctx.shadowBlur = 8;
+            ctx.fillText(char, x, sineY);
+            ctx.shadowBlur = 0;
+        }
+    }
+}
+
+// --- Instantiate Visual Modules ---
+const tunnel = new TunnelEffect();
+const poly = new PolyhedronEffect();
+const plasma = new PlasmaEffect();
+const copper = new CopperBarsEffect();
+const starfield = new StarfieldEffect();
+const scroller = new SineScroller();
+
+// ==========================================
+// 3. MAIN RENDER LOOP & SCENE MANAGER
+// ==========================================
+function render(timestamp) {
+    if (!state.startTime) state.startTime = timestamp;
+    const t = (timestamp - state.startTime) * 0.001; // Elapsed seconds
+    state.currentTime = t;
+
+    // FPS Calculation
+    state.frameCount++;
+    if (timestamp - state.lastFpsUpdate >= 1000) {
+        state.fps = state.frameCount;
+        state.frameCount = 0;
+        state.lastFpsUpdate = timestamp;
+        document.getElementById('fpsCounter').innerText = `FPS: ${state.fps}`;
+    }
+
+    // Update HUD Time
+    const mins = Math.floor(t / 60).toString().padStart(2, '0');
+    const secs = Math.floor(t % 60).toString().padStart(2, '0');
+    document.getElementById('timeCounter').innerText = `TIME: ${mins}:${secs}`;
+
+    // Clear Screen (Trails Effect)
+    ctx.fillStyle = 'rgba(5, 5, 12, 0.35)';
+    ctx.fillRect(0, 0, width, height);
+
+    // Active Scene Switching / Concurrent Composition
+    switch (parseInt(state.activeScene)) {
+        case 0: // ALL EFFECTS / MEGA MODE
+            starfield.draw(ctx, t);
+            plasma.draw(ctx, t);
+            tunnel.draw(ctx, t);
+            copper.draw(ctx, t);
+            poly.draw(ctx, t);
+            break;
+        case 1: // TUNNEL
+            starfield.draw(ctx, t);
+            tunnel.draw(ctx, t);
+            break;
+        case 2: // POLYHEDRON
+            starfield.draw(ctx, t);
+            poly.draw(ctx, t);
+            break;
+        case 3: // PLASMA
+            plasma.draw(ctx, t);
+            break;
+        case 4: // COPPER BARS
+            starfield.draw(ctx, t);
+            copper.draw(ctx, t);
+            break;
+        case 5: // STARFIELD
+            starfield.draw(ctx, t);
+            break;
+    }
+
+    // Always Render Sine Wave Scroller on Top
+    scroller.draw(ctx, t);
+
+    // Render Audio Visualizer Data
+    renderAudioVisualizer();
+
+    requestAnimationFrame(render);
+}
+
+// Render HUD Audio Spectrum / Oscilloscope
+const visData = new Uint8Array(32);
+function renderAudioVisualizer() {
+    visCtx.fillStyle = '#000';
+    visCtx.fillRect(0, 0, visCanvas.width, visCanvas.height);
+
+    if (state.audioPlaying) {
+        synth.getVisualizerData(visData);
+        const barWidth = (visCanvas.width / visData.length);
+
+        for (let i = 0; i < visData.length; i++) {
+            const barHeight = (visData[i] / 255) * visCanvas.height;
+            visCtx.fillStyle = `hsl(${i * 10 + 120}, 100%, 50%)`;
+            visCtx.fillRect(i * barWidth, visCanvas.height - barHeight, barWidth - 1, barHeight);
+        }
+    } else {
+        // Flatline idle line
+        visCtx.strokeStyle = '#00ff66';
+        visCtx.beginPath();
+        visCtx.moveTo(0, visCanvas.height / 2);
+        visCtx.lineTo(visCanvas.width, visCanvas.height / 2);
+        visCtx.stroke();
+    }
+}
+
+// ==========================================
+// 4. INTERACTIVE UI & CONTROLS
+// ==========================================
+const startOverlay = document.getElementById('start-overlay');
+const startDemoBtn = document.getElementById('startDemoBtn');
+const audioBtn = document.getElementById('audioBtn');
+const audioStatus = document.getElementById('audioStatus');
+const sceneSelect = document.getElementById('sceneSelect');
+const nextSceneBtn = document.getElementById('nextSceneBtn');
+const crtBtn = document.getElementById('crtBtn');
+const bloomBtn = document.getElementById('bloomBtn');
+const crtOverlay = document.getElementById('crtOverlay');
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+// Start Demo Action
+function startDemo() {
+    startOverlay.style.display = 'none';
+    if (!state.audioPlaying) {
+        synth.start();
+        state.audioPlaying = true;
+        audioBtn.classList.add('active');
+        audioBtn.innerHTML = `PAUSE AUDIO`;
+        audioStatus.innerText = `AUDIO: PLAYING`;
+    }
+    if (!state.running) {
+        state.running = true;
+        requestAnimationFrame(render);
+    }
+}
+
+startDemoBtn.addEventListener('click', startDemo);
+
+// Toggle Audio Play/Pause
+audioBtn.addEventListener('click', () => {
+    if (state.audioPlaying) {
+        synth.stop();
+        state.audioPlaying = false;
+        audioBtn.classList.remove('active');
+        audioBtn.innerHTML = `START AUDIO`;
+        audioStatus.innerText = `AUDIO: MUTED`;
+    } else {
+        synth.start();
+        state.audioPlaying = true;
+        audioBtn.classList.add('active');
+        audioBtn.innerHTML = `PAUSE AUDIO`;
+        audioStatus.innerText = `AUDIO: PLAYING`;
+    }
+});
+
+// Scene Select Switch
+sceneSelect.addEventListener('change', (e) => {
+    state.activeScene = parseInt(e.target.value);
+});
+
+nextSceneBtn.addEventListener('click', () => {
+    state.activeScene = (state.activeScene + 1) % 6;
+    sceneSelect.value = state.activeScene;
+});
+
+// Toggle CRT Overlay Effect
+crtBtn.addEventListener('click', () => {
+    state.crtEnabled = !state.crtEnabled;
+    crtOverlay.style.opacity = state.crtEnabled ? '0.85' : '0';
+    crtBtn.classList.toggle('active', state.crtEnabled);
+    crtBtn.innerText = `CRT: ${state.crtEnabled ? 'ON' : 'OFF'}`;
+});
+
+// Toggle Glow / Bloom Filter Effect
+bloomBtn.addEventListener('click', () => {
+    state.bloomEnabled = !state.bloomEnabled;
+    canvas.style.filter = state.bloomEnabled ? 'drop-shadow(0 0 12px rgba(0,243,255,0.4)) contrast(1.1)' : 'none';
+    bloomBtn.classList.toggle('active', state.bloomEnabled);
+    bloomBtn.innerText = `BLOOM: ${state.bloomEnabled ? 'ON' : 'OFF'}`;
+});
+
+// Fullscreen Toggle
+fullscreenBtn.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+});
+
+// Initial Setup
+canvas.style.filter = 'drop-shadow(0 0 12px rgba(0,243,255,0.4)) contrast(1.1)';
+</script>
+</body>
+</html>
